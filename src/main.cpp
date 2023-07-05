@@ -334,7 +334,7 @@ int main(int argc, char** argv) {
         return EXIT_FAILURE;
 
     for (auto plugin_to_load : opts.plugin_files) {
-        thorin.register_plugin(plugin_to_load);
+        thorin.register_plugin(plugin_to_load.c_str());
     }
 
     if (opts.opt_level == 1)
