@@ -1104,13 +1104,13 @@ Ptr<ast::PtrType> Parser::parse_ptr_type() {
     if (!double_ptr)
         eat(Token::And);
     bool is_mut = accept(Token::Mut);
-    size_t addr_space = 0;
+    Ptr<ast::LiteralType> addr_space = nullptr;
     if (ahead().tag() == Token::AddrSpace)
         addr_space = parse_addr_space();
     auto pointee = parse_type();
     auto inner_ptr = make_ptr<ast::PtrType>(tracker(), std::move(pointee), is_mut, addr_space);
     return double_ptr
-        ? make_ptr<ast::PtrType>(tracker(), std::move(inner_ptr), false, 0)
+        ? make_ptr<ast::PtrType>(tracker(), std::move(inner_ptr), false, nullptr)
         : std::move(inner_ptr);
 }
 
@@ -1118,6 +1118,12 @@ Ptr<ast::TypeApp> Parser::parse_type_app() {
     Tracker tracker(this);
     auto path = parse_path();
     return make_ptr<ast::TypeApp>(tracker(), std::move(path));
+}
+
+Ptr<ast::LiteralType> Parser::parse_literal_type() {
+    Tracker tracker(this);
+    auto lit = parse_lit();
+    return make_ptr<ast::LiteralType>(tracker(), lit);
 }
 
 Ptr<ast::ErrorType> Parser::parse_error_type() {
@@ -1189,7 +1195,25 @@ ast::Path Parser::parse_path(ast::Identifier&& id, bool allow_types) {
         // Do not accept type arguments on `super`
         if (allow_types && id.name != "super" && accept(Token::LBracket)) {
             parse_list(Token::RBracket, Token::Comma, [&] {
-                args.emplace_back(parse_type());
+                if (ahead().is_literal())
+                    args.emplace_back(parse_literal_type());
+                    //args.emplace_back(parse_type());
+                else if (
+                        ahead().tag() == Token::Fn       ||
+                        ahead().tag() == Token::Super    ||
+                        ahead().tag() == Token::Id       ||
+                        ahead().tag() == Token::LParen   ||
+                        ahead().tag() == Token::LogicAnd ||
+                        ahead().tag() == Token::And      ||
+                        ahead().tag() == Token::Simd     ||
+                        ahead().tag() == Token::LBracket)
+                    args.emplace_back(parse_type());
+                else {
+                    Tracker tracker(this);
+                    error(ahead().loc(), "expected type or integer literal, got '{}'", ahead().string());
+                    next();
+                    args.emplace_back(make_ptr<ast::ErrorType>(tracker()));
+                }
             });
         }
         elems.emplace_back(elem_tracker(), std::move(id), std::move(args));
@@ -1259,16 +1283,19 @@ std::optional<size_t> Parser::parse_array_size() {
     return size;
 }
 
-size_t Parser::parse_addr_space() {
+Ptr<ast::Node> Parser::parse_addr_space() {
     eat(Token::AddrSpace);
     expect(Token::LParen);
     Tracker tracker(this);
-    size_t addr_space = 0;
+    Ptr<ast::Node> addr_space = nullptr;
     if (ahead().is_literal() && ahead().literal().is_integer()) {
-        addr_space = ahead().literal().as_integer();
+        addr_space = make_ptr<ast::LiteralType>(tracker(), ahead().literal());
         next();
-    } else
-        error(tracker(), "invalid address space");
+    } else {
+        addr_space = parse_path();
+        //next(); //We already report an error, so let's advance at least.
+        //error(tracker(), "invalid address space");
+    }
     expect(Token::RParen);
     return addr_space;
 }

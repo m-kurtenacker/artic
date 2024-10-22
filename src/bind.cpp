@@ -128,6 +128,8 @@ void TypeApp::bind(NameBinder& binder) {
 
 void NoCodomType::bind(NameBinder&) {}
 
+void LiteralType::bind(NameBinder&) {}
+
 void ErrorType::bind(NameBinder&) {}
 
 // Statements ----------------------------------------------------------------------

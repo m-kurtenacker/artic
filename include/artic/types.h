@@ -227,10 +227,10 @@ private:
 struct AddrType : public Type {
     const Type* pointee;
     bool is_mut;
-    size_t addr_space;
+    Ptr<ast::LiteralType> addr_space;
 
-    AddrType(TypeTable& type_table, const Type* pointee, bool is_mut, size_t addr_space)
-        : Type(type_table), pointee(pointee), is_mut(is_mut), addr_space(addr_space)
+    AddrType(TypeTable& type_table, const Type* pointee, bool is_mut, Ptr<ast::LiteralType>&& addr_space)
+        : Type(type_table), pointee(pointee), is_mut(is_mut), addr_space(std::move(addr_space))
     {}
 
     bool equals(const Type*) const override;
@@ -255,8 +255,8 @@ struct PtrType : public AddrType {
     std::string stringify(Emitter&) const override;
 
 private:
-    PtrType(TypeTable& type_table, const Type* pointee, bool is_mut, size_t addr_space)
-        : AddrType(type_table, pointee, is_mut, addr_space)
+    PtrType(TypeTable& type_table, const Type* pointee, bool is_mut, Ptr<ast::LiteralType>&& addr_space)
+        : AddrType(type_table, pointee, is_mut, std::move(addr_space))
     {}
 
     friend class TypeTable;
@@ -268,8 +268,8 @@ struct RefType : public AddrType {
     const Type* replace(const ReplaceMap&) const override;
 
 private:
-    RefType(TypeTable& type_table, const Type* pointee, bool is_mut, size_t addr_space)
-        : AddrType(type_table, pointee, is_mut, addr_space)
+    RefType(TypeTable& type_table, const Type* pointee, bool is_mut, Ptr<ast::LiteralType>&& addr_space)
+        : AddrType(type_table, pointee, is_mut, std::move(addr_space))
     {}
 
     friend class TypeTable;
@@ -669,8 +669,8 @@ public:
     const TupleType*         tuple_type(const ArrayRef<const Type*>&);
     const SizedArrayType*    sized_array_type(const Type*, size_t, bool);
     const UnsizedArrayType*  unsized_array_type(const Type*);
-    const PtrType*           ptr_type(const Type*, bool, size_t);
-    const RefType*           ref_type(const Type*, bool, size_t);
+    const PtrType*           ptr_type(const Type*, bool, const ast::LiteralType&);
+    const RefType*           ref_type(const Type*, bool, const ast::LiteralType&);
     const ImplicitParamType* implicit_param_type(const Type*);
     const FnType*            fn_type(const Type*, const Type*);
     const FnType*            cn_type(const Type*);

@@ -94,6 +94,7 @@ private:
     Ptr<ast::FnType>        parse_fn_type();
     Ptr<ast::PtrType>       parse_ptr_type();
     Ptr<ast::TypeApp>       parse_type_app();
+    Ptr<ast::LiteralType>   parse_literal_type();
     Ptr<ast::ErrorType>     parse_error_type();
 
     Ptr<ast::Filter>        parse_filter();
@@ -109,7 +110,7 @@ private:
     Literal                 parse_lit();
     std::string             parse_str();
     std::optional<size_t>   parse_array_size();
-    size_t                  parse_addr_space();
+    Ptr<ast::Node>          parse_addr_space();
 
     std::pair<Ptr<ast::Expr>, Ptr<ast::Expr>> parse_cond_and_block();
 

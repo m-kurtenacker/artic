@@ -497,7 +497,7 @@ bool Type::subtype(const Type* other) const {
     // U <: &T if U <: T (only for generic pointers)
     if (other_ptr_type &&
         !other_ptr_type->is_mut &&
-        other_ptr_type->addr_space == 0 &&
+        other_ptr_type->addr_space == nullptr &&
         subtype(other_ptr_type->pointee))
         return true;
 
@@ -666,11 +666,11 @@ const UnsizedArrayType* TypeTable::unsized_array_type(const Type* elem) {
     return insert<UnsizedArrayType>(elem);
 }
 
-const PtrType* TypeTable::ptr_type(const Type* pointee, bool is_mut, size_t addr_space) {
+const PtrType* TypeTable::ptr_type(const Type* pointee, bool is_mut, const LiteralType& addr_space) {
     return insert<PtrType>(pointee, is_mut, addr_space);
 }
 
-const RefType* TypeTable::ref_type(const Type* pointee, bool is_mut, size_t addr_space) {
+const RefType* TypeTable::ref_type(const Type* pointee, bool is_mut, const LiteralType& addr_space) {
     return insert<RefType>(pointee, is_mut, addr_space);
 }
 

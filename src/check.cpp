@@ -855,7 +855,7 @@ const artic::Type* SizedArrayType::infer(TypeChecker& checker) {
 const artic::Type* UnsizedArrayType::infer(TypeChecker& checker) {
     auto type = checker.type_table.unsized_array_type(checker.infer(*elem));
     checker.error(loc, "unsized array types cannot be used directly");
-    checker.note("use '{}' instead", *checker.type_table.ptr_type(type, false, 0));
+    //checker.note("use '{}' instead", *checker.type_table.ptr_type(type, false, 0));
     return checker.type_table.type_error();
 }
 

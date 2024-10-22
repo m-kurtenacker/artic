@@ -667,8 +667,11 @@ void PtrType::print(Printer& p) const {
     p << '&';
     if (is_mut)
         p << log::keyword_style("mut") << ' ';
-    if (addr_space != 0)
-        p << log::keyword_style("addrspace") << '(' << addr_space << ')';
+    if (addr_space != nullptr) {
+        p << log::keyword_style("addrspace") << '(';
+        addr_space->print(p);
+        p << ')';
+    }
     if (pointee->isa<PtrType>())
         p << '(';
     pointee->print(p);
@@ -682,6 +685,10 @@ void TypeApp::print(Printer& p) const {
 
 void NoCodomType::print(artic::Printer& p) const {
     p << "!";
+}
+
+void LiteralType::print(Printer& p) const {
+    p << std::showpoint << log::literal_style(lit) << "™";
 }
 
 void ErrorType::print(Printer& p) const {
@@ -735,8 +742,11 @@ void PtrType::print(Printer& p) const {
     p << '&';
     if (is_mut)
         p << log::keyword_style("mut") << ' ';
-    if (addr_space != 0)
-        p << log::keyword_style("addrspace") << '(' << addr_space << ')';
+    if (addr_space != nullptr) {
+        p << log::keyword_style("addrspace") << '(';
+        addr_space->print(p);
+        p << ')';
+    }
     if (pointee->isa<PtrType>())
         p << '(';
     pointee->print(p);

@@ -391,13 +391,15 @@ struct FnType : public Type {
     void print(Printer&) const override;
 };
 
+struct LiteralType;
+
 struct PtrType : public Type {
     Ptr<Type> pointee;
     bool is_mut;
-    size_t addr_space;
+    Ptr<ast::LiteralType> addr_space;
 
-    PtrType(const Loc& loc, Ptr<Type>&& pointee, bool is_mut, size_t addr_space)
-        : Type(loc), pointee(std::move(pointee)), is_mut(is_mut), addr_space(addr_space)
+    PtrType(const Loc& loc, Ptr<Type>&& pointee, bool is_mut, Ptr<ast::LiteralType>&& addr_space)
+        : Type(loc), pointee(std::move(pointee)), is_mut(is_mut), addr_space(std::move(addr_space))
     {}
 
     const artic::Type* infer(TypeChecker&) override;
@@ -428,6 +430,31 @@ struct NoCodomType : public Type {
     void bind(NameBinder&) override;
     void print(Printer&) const override;
 };
+
+/// An integer literal put in a type parameter
+struct LiteralType : public Type {
+    Literal lit;
+
+    LiteralType(const Loc& loc, const Literal& lit )
+        : Type(loc), lit(lit)
+    {}
+
+    //const artic::Type* infer(TypeChecker&) override;
+    void bind(NameBinder&) override;
+    void print(Printer&) const override;
+
+    //bool equals(const Type* other) const override { return this == other; };
+    //size_t hash() const override;
+    //bool contains(const Type*) const override;
+
+    //bool is_compatible_with(const AddrType* other) const;
+
+    //size_t order(std::unordered_set<const Type*>&) const override;
+    //void variance(TypeVarMap<TypeVariance>&, bool) const override;
+    //void bounds(TypeVarMap<TypeBounds>&, const Type*, bool) const override;
+    //bool is_sized(std::unordered_set<const Type*>&) const override;
+};
+
 
 /// Type resulting from a parsing error.
 struct ErrorType : public Type {
