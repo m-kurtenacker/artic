@@ -47,6 +47,7 @@ add_test(NAME simple_enums1      COMMAND artic --print-ast ${CMAKE_CURRENT_SOURC
 add_test(NAME simple_enums2      COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/enums2.art)
 add_test(NAME simple_enums3      COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/enums3.art)
 add_test(NAME simple_enums4      COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/enums4.art)
+add_test(NAME simple_enums5      COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/enums5.art)
 add_test(NAME simple_types       COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/types.art)
 add_test(NAME simple_loops       COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/loops.art)
 add_test(NAME simple_return      COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/return.art)
@@ -54,6 +55,7 @@ add_test(NAME simple_mut         COMMAND artic --print-ast --warnings-as-errors 
 add_test(NAME simple_static      COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/static.art)
 add_test(NAME simple_arrays1     COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/arrays1.art)
 add_test(NAME simple_arrays2     COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/arrays2.art)
+add_test(NAME simple_arrays3     COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/arrays3.art)
 add_test(NAME simple_sort        COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/sort.art)
 add_test(NAME simple_filters1    COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/filters1.art)
 add_test(NAME simple_filters2    COMMAND artic --print-ast ${CMAKE_CURRENT_SOURCE_DIR}/simple/filters2.art)
@@ -156,7 +158,9 @@ if (Thorin_HAS_LLVM_SUPPORT)
     # This version is required for the --ignore-eol flag used when comparing files
     cmake_minimum_required(VERSION 3.14 FATAL_ERROR)
 
-    find_package(Clang REQUIRED CONFIG PATHS ${LLVM_DIR}/../clang NO_DEFAULT_PATH)
+    if (NOT TARGET clang)
+        find_package(Clang REQUIRED CONFIG PATHS ${LLVM_DIR}/../clang)
+    endif()
 
     # Compile the helper functions into an object file
     set(HELPERS_OBJ ${CMAKE_CURRENT_BINARY_DIR}/test_helpers.o)
@@ -188,7 +192,7 @@ if (Thorin_HAS_LLVM_SUPPORT)
             COMMAND $<TARGET_FILE:clang> ${test_NAME}.ll ${MATH_LIB} ${HELPERS_OBJ} -o test_${test_NAME}
             DEPENDS artic clang test_helpers ${test_SOURCE_FILE}
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-        add_custom_target(test_${test_NAME} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/test_${test_NAME})
+        add_custom_target(test_target_${test_NAME} ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/test_${test_NAME})
         add_test(
             NAME ${test_NAME}
             COMMAND
@@ -199,7 +203,7 @@ if (Thorin_HAS_LLVM_SUPPORT)
                 "-DTEST_ARGS=${test_ARGS}"
                 -P ${CMAKE_CURRENT_SOURCE_DIR}/run_codegen_test.cmake
             WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
-        list(APPEND CODEGEN_TESTS test_${test_NAME})
+        list(APPEND CODEGEN_TESTS test_target_${test_NAME})
         set(CODEGEN_TESTS ${CODEGEN_TESTS} PARENT_SCOPE)
     endfunction()
 
@@ -227,6 +231,8 @@ if (Thorin_HAS_LLVM_SUPPORT)
         NAME compare
         SOURCE_FILE ${CMAKE_CURRENT_SOURCE_DIR}/codegen/compare.art)
 endif ()
+
+add_subdirectory(thorin)
 
 if (CODE_COVERAGE AND CMAKE_BUILD_TYPE STREQUAL "Debug")
     set(COVERAGE_EXCLUDES "${CMAKE_CURRENT_SOURCE_DIR}/codegen/*")

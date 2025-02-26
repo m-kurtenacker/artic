@@ -85,8 +85,12 @@ Ptr<ast::FnDecl> Parser::parse_fn_decl() {
         error(ahead().loc(), "parameter list expected in function definition");
 
     Ptr<ast::Type> ret_type;
-    if (accept(Token::Arrow))
-        ret_type = parse_type();
+    if (accept(Token::Arrow)) {
+        if (accept(Token::Not))
+            ret_type = make_ptr<ast::NoCodomType>(prev_);
+        else
+            ret_type = parse_type();
+    }
 
     Ptr<ast::Expr> body;
     if (ahead().tag() == Token::LBrace)
@@ -563,7 +567,7 @@ Ptr<ast::Expr> Parser::parse_array_expr() {
         auto size = parse_array_size();
         expect(Token::RBracket);
         if (size)
-            return make_ptr<ast::RepeatArrayExpr>(tracker(), std::move(elems.front()), *size, is_simd);
+            return make_ptr<ast::RepeatArrayExpr>(tracker(), std::move(elems.front()), std::move(*size), is_simd);
         return make_ptr<ast::ArrayExpr>(tracker(), std::move(elems), is_simd);
     } else if (accept(Token::Comma)) {
         parse_list(Token::RBracket, Token::Comma, [&] {
@@ -1065,15 +1069,17 @@ Ptr<ast::ArrayType> Parser::parse_array_type() {
     bool is_simd = accept(Token::Simd);
     expect(Token::LBracket);
     auto elem = parse_type();
-    std::optional<size_t> size;
     if (is_simd || ahead().tag() == Token::Mul) {
         expect(Token::Mul);
-        size = parse_array_size();
+        auto size = parse_array_size();
+        expect(Token::RBracket);
+        if (size)
+            return make_ptr<ast::SizedArrayType>(tracker(), std::move(elem), std::move(*size), is_simd);
+        return make_ptr<ast::UnsizedArrayType>(tracker(), std::move(elem));
+    } else {
+        expect(Token::RBracket);
+        return make_ptr<ast::UnsizedArrayType>(tracker(), std::move(elem));
     }
-    expect(Token::RBracket);
-    if (size)
-        return make_ptr<ast::SizedArrayType>(tracker(), std::move(elem), *size, is_simd);
-    return make_ptr<ast::UnsizedArrayType>(tracker(), std::move(elem));
 }
 
 Ptr<ast::FnType> Parser::parse_fn_type() {
@@ -1085,7 +1091,11 @@ Ptr<ast::FnType> Parser::parse_fn_type() {
     else
         from = parse_error_type();
     expect(Token::Arrow);
-    auto to = parse_type();
+    Ptr<ast::Type> to;
+    if (accept(Token::Not))
+        to = make_ptr<ast::NoCodomType>(prev_);
+    else
+        to = parse_type();
     return make_ptr<ast::FnType>(tracker(), std::move(from), std::move(to));
 }
 
@@ -1238,17 +1248,15 @@ std::string Parser::parse_str() {
     return str;
 }
 
-std::optional<size_t> Parser::parse_array_size() {
-    std::optional<size_t> size;
+std::optional<std::variant<size_t, ast::Path>> Parser::parse_array_size() {
     if (ahead().is_literal() && ahead().literal().is_integer()) {
-        size = ahead().literal().as_integer();
+        auto size = ahead().literal().as_integer();
         eat(Token::Lit);
+        return size;
     } else {
-        error(ahead().loc(), "expected integer literal as array size");
-        if (ahead().tag() != Token::RBracket)
-            next();
+        auto path = parse_path();
+        return path;
     }
-    return size;
 }
 
 size_t Parser::parse_addr_space() {

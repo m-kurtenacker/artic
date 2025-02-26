@@ -356,14 +356,15 @@ struct ArrayType : public Type {
 
 /// Sized array type.
 struct SizedArrayType : public ArrayType {
-    size_t size;
+    std::variant<size_t, ast::Path> size;
     bool is_simd;
 
-    SizedArrayType(const Loc& loc, Ptr<Type>&& elem, size_t size, bool is_simd)
-        : ArrayType(loc, std::move(elem)), size(size), is_simd(is_simd)
+    SizedArrayType(const Loc& loc, Ptr<Type>&& elem, std::variant<size_t, ast::Path>&& size, bool is_simd)
+        : ArrayType(loc, std::move(elem)), size(std::move(size)), is_simd(is_simd)
     {}
 
     const artic::Type* infer(TypeChecker&) override;
+    void bind(NameBinder&) override;
     void print(Printer&) const override;
 };
 
@@ -411,6 +412,17 @@ struct TypeApp : public Type {
 
     TypeApp(const Loc& loc, Path&& path)
         : Type(loc), path(std::move(path))
+    {}
+
+    const artic::Type* infer(TypeChecker&) override;
+    void bind(NameBinder&) override;
+    void print(Printer&) const override;
+};
+
+/// The codomain of functions that don't return anything.
+struct NoCodomType : public Type {
+    NoCodomType(const Loc& loc)
+        : Type(loc)
     {}
 
     const artic::Type* infer(TypeChecker&) override;
@@ -662,11 +674,11 @@ struct ArrayExpr : public Expr {
 /// Array expression repeating a given value a given number of times.
 struct RepeatArrayExpr : public Expr {
     Ptr<Expr> elem;
-    size_t size;
+    std::variant<size_t, ast::Path> size;
     bool is_simd;
 
-    RepeatArrayExpr(const Loc& loc, Ptr<Expr>&& elem, size_t size, bool is_simd)
-        : Expr(loc), elem(std::move(elem)), size(size), is_simd(is_simd)
+    RepeatArrayExpr(const Loc& loc, Ptr<Expr>&& elem, std::variant<size_t, ast::Path>&& size, bool is_simd)
+        : Expr(loc), elem(std::move(elem)), size(std::move(size)), is_simd(is_simd)
     {}
 
     bool is_jumping() const override;
@@ -1310,6 +1322,8 @@ struct ImplicitDecl : public Decl {
 struct StaticDecl : public ValueDecl {
     Ptr<Type> type;
     Ptr<Expr> init;
+    std::vector<StaticDecl*> others;
+
     bool is_mut;
 
     StaticDecl(

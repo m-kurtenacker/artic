@@ -113,6 +113,12 @@ void ArrayType::bind(NameBinder& binder) {
     binder.bind(*elem);
 }
 
+void SizedArrayType::bind(NameBinder& binder) {
+    binder.bind(*elem);
+    if (std::holds_alternative<ast::Path>(size))
+        binder.bind(std::get<ast::Path>(size));
+}
+
 void FnType::bind(NameBinder& binder) {
     binder.bind(*from);
     if (to) binder.bind(*to);
@@ -125,6 +131,8 @@ void PtrType::bind(NameBinder& binder) {
 void TypeApp::bind(NameBinder& binder) {
     binder.bind(path);
 }
+
+void NoCodomType::bind(NameBinder&) {}
 
 void ErrorType::bind(NameBinder&) {}
 
@@ -177,6 +185,8 @@ void ArrayExpr::bind(NameBinder& binder) {
 
 void RepeatArrayExpr::bind(NameBinder& binder) {
     binder.bind(*elem);
+    if (std::holds_alternative<ast::Path>(size))
+        binder.bind(std::get<ast::Path>(size));
 }
 
 void FnExpr::bind(NameBinder& binder, bool in_for_loop) {
@@ -391,6 +401,33 @@ void ImplicitDecl::bind(artic::NameBinder& binder) {
 }
 
 void StaticDecl::bind_head(NameBinder& binder) {
+    auto pre_symbol = binder.find_symbol(this->id.name);
+    if (pre_symbol) {
+        auto pre_decl = pre_symbol->decl;
+
+        if(!pre_decl->isa<StaticDecl>()) {
+            binder.error(loc, "identifier '{}' already declared", this->id.name);
+            binder.note(pre_decl->loc, "previously declared here");
+            return;
+        }
+        auto pre_static = pre_decl->as<StaticDecl>();
+
+        if (init) {
+            if(pre_static->init) {
+                binder.error(loc, "overwriting init of '{}'", this->id.name);
+                binder.note(pre_decl->loc, "previously declared here");
+            }
+
+            binder.remove_symbol(this->id.name);
+
+            this->others.push_back(pre_static);
+        } else {
+            pre_static->others.push_back(this);
+
+            return;
+        }
+    }
+
     binder.insert_symbol(*this);
 }
 
@@ -400,6 +437,16 @@ void StaticDecl::bind(NameBinder& binder) {
 }
 
 void FnDecl::bind_head(NameBinder& binder) {
+    if (this->attrs && this->attrs->find("intern")) {
+        auto shadow = binder.find_symbol(this->id.name);
+        if (shadow) {
+            auto shadow_decl = shadow->decl->as<FnDecl>();
+            if (shadow_decl->fn->body)
+                return;
+            else
+                binder.remove_symbol(this->id.name);
+        }
+    }
     binder.insert_symbol(*this);
 }
 
