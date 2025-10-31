@@ -522,7 +522,15 @@ void TypeDecl::bind(NameBinder& binder) {
 
 void ExtTypeDecl::bind(NameBinder& binder) {
     binder.push_scope();
-    if (type_params) binder.bind(*type_params);
+    //if (type_params) binder.bind(*type_params);
+    for (auto& arg : args_) {
+        if (auto t = std::get_if<Ptr<Type>>(&arg))
+            binder.bind(**t);
+        else if (auto e = std::get_if<Ptr<Expr>>(&arg))
+            binder.bind(**e);
+        else
+            assert(false);
+    }
     binder.pop_scope();
 }
 

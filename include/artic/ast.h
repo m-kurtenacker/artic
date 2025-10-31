@@ -1508,17 +1508,20 @@ struct TypeDecl : public NamedDecl {
 
 struct ExtTypeDecl : public NamedDecl {
     Ptr<TypeParamList> type_params;
-    PtrVector<std::string> type_args;
+    std::string type_name;
+    std::vector<std::variant<Ptr<Type>, Ptr<Expr>>> args_;
 
     ExtTypeDecl(
         const Loc& loc,
         Identifier&& id,
+        std::string&& type_name,
         Ptr<TypeParamList>&& type_params,
-        PtrVector<std::string>&& type_args)
+        std::vector<std::variant<Ptr<Type>, Ptr<Expr>>>&& args)
         : NamedDecl(loc, std::move(id))
+        , type_name(type_name)
         , type_params(std::move(type_params))
-        , type_args(std::move(type_args))
-    {}
+        , args_(std::move(args)) {
+    }
 
     const thorin::Def* emit(Emitter&) const override;
     const artic::Type* infer(TypeChecker&) override;

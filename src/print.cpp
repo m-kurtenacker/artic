@@ -617,10 +617,15 @@ void TypeDecl::print(Printer& p) const {
 void ExtTypeDecl::print(Printer& p) const {
     if (attrs) attrs->print(p);
     p << log::keyword_style("type_ext") << ' ' <<  id.name;
-    if (type_params) type_params->print(p);
-    p << " = { ";
-    print_list(p, ',', type_args, [&] (auto& arg) {
-        p << *arg;
+    // if (type_params) type_params->print(p);
+    p << " = \"" << type_name << "\" { ";
+    print_list(p, ',', args_, [&] (auto& arg) {
+        if (auto t = std::get_if<Ptr<ast::Type>>(&arg)) {
+            p << **t;
+        } else if (auto e = std::get_if<Ptr<ast::Expr>>(&arg))
+            p << **e;
+        else
+            p << "invalid";
     });
     p << " };";
 }

@@ -726,8 +726,8 @@ const TypeAlias* TypeTable::type_alias(const ast::TypeDecl& decl) {
     return insert<TypeAlias>(decl);
 }
 
-const ExtType* TypeTable::ext_type(const ast::ExtTypeDecl& decl) {
-    return insert<ExtType>(decl);
+const ExtType* TypeTable::ext_type(const ast::ExtTypeDecl& decl, std::vector<const Type*>&& args) {
+    return insert<ExtType>(decl, std::move(args));
 }
 
 const Type* TypeTable::type_app(const UserType* applied, const ArrayRef<const Type*>& type_args) {
