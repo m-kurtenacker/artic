@@ -2056,7 +2056,9 @@ const thorin::Type* ExtType::convert(Emitter& emitter, const Type* parent) const
             assert(false);
     }
 
-    auto type = emitter.world.extern_type(decl.type_name, args);
+    auto type = emitter.world.extern_type(decl.type_name, args.size());
+    for (size_t i = 0; i < args.size(); i++)
+        type->set_op(i, args[i]);
     emitter.types[parent] = type;
     return type;
 }
