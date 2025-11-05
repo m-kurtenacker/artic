@@ -1510,6 +1510,7 @@ struct ExtTypeDecl : public NamedDecl {
     Ptr<TypeParamList> type_params;
     std::string type_name;
     std::vector<std::variant<Ptr<Type>, Ptr<Expr>>> args_;
+    std::vector<const artic::Type*> args_types_;
 
     ExtTypeDecl(
         const Loc& loc,

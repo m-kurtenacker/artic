@@ -583,13 +583,11 @@ private:
 };
 
 struct ExtType : public PolyTypeFromDecl<UserType, ast::ExtTypeDecl> {
-    std::vector<const Type*> args_;
     void print(Printer&) const override;
 
 private:
-    ExtType(TypeTable& type_table, const ast::ExtTypeDecl& decl, std::vector<const Type*>&& args)
+    ExtType(TypeTable& type_table, const ast::ExtTypeDecl& decl)
         : PolyTypeFromDecl(type_table, decl)
-        , args_(std::move(args))
     {}
 
     using UserType::convert;
@@ -702,7 +700,7 @@ public:
     const EnumType*          enum_type(const ast::EnumDecl&);
     const ModType*           mod_type(const ast::ModDecl&);
     const TypeAlias*         type_alias(const ast::TypeDecl&);
-    const ExtType*           ext_type(const ast::ExtTypeDecl&, std::vector<const Type*>&&);
+    const ExtType*           ext_type(const ast::ExtTypeDecl&);
 
     /// Creates a type application for structures/enumeration types,
     /// or returns the type alias expanded with the given type arguments.

@@ -1817,18 +1817,22 @@ const artic::Type* TypeDecl::infer(TypeChecker& checker) {
 }
 
 const artic::Type* ExtTypeDecl::infer(TypeChecker& checker) {
-    std::vector<const artic::Type*> args;
+    if (!checker.enter_decl(this))
+        return checker.type_table.type_error();
+    const ExtType* ext_type = checker.type_table.ext_type(*this);
+    // Set the type before entering the args
+    type = ext_type;
     for (auto& arg : args_) {
         if (auto t = std::get_if<Ptr<Type>>(&arg))
-            args.emplace_back(checker.infer(**t));
+            args_types_.emplace_back(checker.infer(**t));
         else if (auto e = std::get_if<Ptr<Expr>>(&arg)) {
             checker.infer(**e);
-            args.emplace_back(nullptr);
+            args_types_.emplace_back(nullptr);
         } else
             assert(false);
     }
-    const artic::Type* type = checker.type_table.ext_type(*this, std::move(args));
-    return type;
+    checker.exit_decl(this);
+    return ext_type;
 }
 
 const artic::Type* ModDecl::infer(TypeChecker& checker) {

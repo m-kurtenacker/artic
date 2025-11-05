@@ -2046,20 +2046,18 @@ const thorin::Type* ExtType::convert(Emitter& emitter, const Type* parent) const
     if (auto it = emitter.types.find(this); !type_params() && it != emitter.types.end())
         return it->second;
 
-    std::vector<const thorin::Def*> args;
-    for (size_t i = 0; i < args_.size(); i++) {
-        if (auto t = args_[i]) {
-            args.emplace_back(t->convert(emitter));
+    auto type = emitter.world.extern_type(decl.type_name, decl.args_types_.size(), { decl.id.name });
+    emitter.types[parent] = type;
+
+    for (size_t i = 0; i < decl.args_types_.size(); i++) {
+        if (auto t = decl.args_types_[i]) {
+            type->set_op(i, t->convert(emitter));
         } else if (auto e = std::get_if<Ptr<ast::Expr>>(&decl.args_[i]))
-            args.emplace_back(emitter.emit(**e));
+            type->set_op(i, emitter.emit(**e));
         else
             assert(false);
     }
 
-    auto type = emitter.world.extern_type(decl.type_name, args.size(), { decl.id.name });
-    for (size_t i = 0; i < args.size(); i++)
-        type->set_op(i, args[i]);
-    emitter.types[parent] = type;
     return type;
 }
 
