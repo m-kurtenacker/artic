@@ -1827,6 +1827,8 @@ const artic::Type* ExtTypeDecl::infer(TypeChecker& checker) {
             args_types_.emplace_back(checker.infer(**t));
         else if (auto e = std::get_if<Ptr<Expr>>(&arg)) {
             checker.infer(**e);
+            if (!(*e)->is_constant())
+                checker.error((*e)->loc, "only constants are allowed as external type members");
             args_types_.emplace_back(nullptr);
         } else
             assert(false);
