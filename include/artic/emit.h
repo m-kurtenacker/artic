@@ -104,12 +104,12 @@ public:
     void redundant_case(const ast::CaseExpr&);
     void non_exhaustive_match(const ast::MatchExpr&);
 
-    thorin::Continuation* basic_block(thorin::Debug = {});
-    thorin::Continuation* basic_block_with_mem(thorin::Debug = {});
-    thorin::Continuation* basic_block_with_mem(const thorin::Type*, thorin::Debug = {});
+    thorin::Continuation* basic_block(thorin::Debug);
+    thorin::Continuation* basic_block_with_mem(thorin::Debug);
+    thorin::Continuation* basic_block_with_mem(const thorin::Type*, thorin::Debug);
 
     const thorin::Def* ctor_index(const ast::Ptrn& ptrn);
-    const thorin::Def* ctor_index(size_t, thorin::Debug = {});
+    const thorin::Def* ctor_index(size_t, thorin::Debug);
 
     const thorin::FnType* continuation_type_with_mem(const thorin::Type*);
     const thorin::FnType* function_type_with_mem(const thorin::Type*, const thorin::Type*);
@@ -117,19 +117,19 @@ public:
     std::vector<const thorin::Def*> call_args(const thorin::Def*, const thorin::Def*, const thorin::Def* = nullptr);
 
     void enter(thorin::Continuation*);
-    void jump(const thorin::Def*, thorin::Debug = {});
-    void jump(const thorin::Def*, const thorin::Def*, thorin::Debug = {});
-    const thorin::Def* call(const thorin::Def*, const thorin::Def*, thorin::Debug = {});
-    const thorin::Def* call(const thorin::Def*, const thorin::Def*, thorin::Continuation*, thorin::Debug = {});
-    void branch(const thorin::Def*, const thorin::Def*, const thorin::Def*, thorin::Debug = {});
+    void jump(const thorin::Def*, thorin::Debug);
+    void jump(const thorin::Def*, const thorin::Def*, thorin::Debug);
+    const thorin::Def* call(const thorin::Def*, const thorin::Def*, thorin::Debug);
+    const thorin::Def* call(const thorin::Def*, const thorin::Def*, thorin::Continuation*, thorin::Debug);
+    void branch(const thorin::Def*, const thorin::Def*, const thorin::Def*, thorin::Debug);
 
-    const thorin::Def* alloc(const thorin::Type*, thorin::Debug = {});
-    void store(const thorin::Def*, const thorin::Def*, thorin::Debug = {});
-    const thorin::Def* load(const thorin::Def*, thorin::Debug = {});
-    const thorin::Def* addr_of(const thorin::Def*, thorin::Debug = {});
+    const thorin::Def* alloc(const thorin::Type*, thorin::Debug);
+    void store(const thorin::Def*, const thorin::Def*, thorin::Debug);
+    const thorin::Def* load(const thorin::Def*, thorin::Debug);
+    const thorin::Def* addr_of(const thorin::Def*, thorin::Debug);
 
-    const thorin::Def* no_ret();
-    const thorin::Def* down_cast(const thorin::Def*, const Type*, const Type*, thorin::Debug = {});
+    const thorin::Def* no_ret(thorin::Debug);
+    const thorin::Def* down_cast(const thorin::Def*, const Type*, const Type*, thorin::Debug);
 
     const thorin::Def* emit(const ast::Node&);
     void emit(const ast::Ptrn&, const thorin::Def*);
