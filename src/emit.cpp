@@ -1273,7 +1273,7 @@ const thorin::Def* FnExpr::emit(Emitter& emitter) const {
     auto _ = emitter.save_state();
     auto cont = emitter.world.continuation(
         type->convert(emitter)->as<thorin::FnType>(),
-        emitter.debug_info(*this));
+        emitter.debug_info(*this, "fn_body"));
     cont->params().back()->set_name("ret");
     // Set the IR node before entering the body
     def = cont;
@@ -1282,7 +1282,7 @@ const thorin::Def* FnExpr::emit(Emitter& emitter) const {
     if (filter)
         cont->set_filter(emitter.world.filter(thorin::Array<const thorin::Def*>(cont->num_params(), emitter.emit(*filter)), emitter.debug_info(*this)));
     auto value = emitter.emit(*body);
-    emitter.jump(cont->params().back(), value, emitter.debug_info(*this));
+    emitter.jump(cont->params().back(), value, emitter.debug_info(*this, "return"));
     return cont;
 }
 
@@ -1298,16 +1298,16 @@ const thorin::Def* CallExpr::emit(Emitter& emitter) const {
         auto fn = emitter.emit(*callee);
         auto value = emitter.emit(*arg);
         if (type->isa<artic::NoRetType>()) {
-            emitter.jump(fn, value, emitter.debug_info(*this));
-            return emitter.no_ret(emitter.debug_info(*this));
+            emitter.jump(fn, value, emitter.debug_info(*this , "jump"));
+            return emitter.no_ret(emitter.debug_info(*this, "noret"));
         }
-        return emitter.call(fn, value, emitter.debug_info(*this));
+        return emitter.call(fn, value, emitter.debug_info(*this, "call"));
     } else {
         auto array = emitter.emit(*callee);
         auto index = emitter.emit(*arg);
         return type->isa<artic::RefType>()
-            ? emitter.world.lea(array, index, emitter.debug_info(*this))
-            : emitter.world.extract(array, index, emitter.debug_info(*this));
+            ? emitter.world.lea(array, index, emitter.debug_info(*this, "lea"))
+            : emitter.world.extract(array, index, emitter.debug_info(*this, "extract"));
     }
 }
 
@@ -1733,7 +1733,7 @@ const thorin::Def* FnDecl::emit(Emitter& emitter) const {
         if (fn->filter)
             cont->set_filter(emitter.world.filter(thorin::Array<const thorin::Def*>(cont->num_params(), emitter.emit(*fn->filter)), emitter.debug_info(*this)));
         auto value = emitter.emit(*fn->body);
-        emitter.jump(cont->params().back(), value, emitter.debug_info(*fn->body));
+        emitter.jump(cont->params().back(), value, value->debug());
     }
 
     // Clear the thorin IR generated for this entire function

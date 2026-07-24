@@ -91,6 +91,7 @@ struct ProgramOptions {
     std::string module_name;
     bool exit = false;
     bool no_color = false;
+    bool print_debug_info = false;
     bool warns_as_errors = false;
     bool enable_all_warns = false;
     bool debug = false;
@@ -146,6 +147,8 @@ struct ProgramOptions {
                     return true;
                 } else if (matches(argv[i], "--no-color")) {
                     no_color = true;
+                } else if (matches(argv[i], "--print-debug-info")) {
+                    print_debug_info = true;
                 } else if (matches(argv[i], "-Wall", "--enable-all-warnings")) {
                     enable_all_warns = true;
                 } else if (matches(argv[i], "-Werror", "--warnings-as-errors")) {
@@ -365,7 +368,7 @@ int main(int argc, char** argv) {
     if (opts.opt_level > 1 || opts.emit_host_code)
         thorin.opt();
     if (opts.emit_thorin)
-        thorin.world().dump_scoped(!opts.no_color);
+        thorin.world().dump_scoped(!opts.no_color, opts.print_debug_info);
 
     auto emit_to_file = [&] (thorin::CodeGen& cg) {
         if (opts.module_name == "-") {
